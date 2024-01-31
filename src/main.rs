@@ -1,61 +1,40 @@
-use notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
-use std::sync::mpsc::{channel, Receiver};
-use std::time::Duration;
+use notify::{RecursiveMode, Watcher};
+use notify_debouncer_full::new_debouncer;
+use std::{path::Path, time::Duration};
 
-use notify_rust::{Notification, Urgency};
-
-mod file_watcher;
-mod notifier;
-
+/// Example for notify-debouncer-full
 fn main() {
-    if let Err(err) = run_daemon() {
-        eprintln!("Error: {}", err);
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+
+    let path = std::env::args()
+        .nth(1)
+        .expect("Argument 1 needs to be a path");
+
+    log::info!("Watching {path}");
+
+    if let Err(error) = watch(path) {
+        log::error!("Error: {error:?}");
     }
 }
 
+fn watch<P: AsRef<Path>>(path: P) -> notify::Result<()> {
+    let (tx, rx) = std::sync::mpsc::channel();
 
+    // Create a new debounced file watcher with a timeout of 2 seconds.
+    // The tickrate will be selected automatically, as well as the underlying watch implementation.
+    let mut debouncer = new_debouncer(Duration::from_secs(2), None, tx)?;
 
-fn run_daemon() -> Result<(), Box<dyn std::error::Error>> {
-    let mut watcher = file_watcher::FileWatcher::new()?;
-    watcher.watch_directory("/home");
-    watcher.watch_directory("/opt/");
+    // Add a path to be watched. All files and directories at that path and
+    // below will be monitored for changes.
+    debouncer.watcher().watch(path.as_ref(), RecursiveMode::Recursive)?;
 
-
-    loop {
-        match watcher.receive_event() {
-            Ok(event) => handle_event(event),
-            Err(err) => eprintln!("Watcher error: {}", err),
+    // print all events and errors
+    for result in rx {
+        match result {
+            Ok(events) => events.iter().for_each(|event| log::info!("{event:?}")),
+            Err(errors) => errors.iter().for_each(|error| log::error!("{error:?}")),
         }
     }
-}
 
-
-fn handle_event(event: DebouncedEvent) {
-    match event {
-        DebouncedEvent::Create(path) => {
-            notifier::send_notification("File Created", &path.to_string_lossy());   
-        }
-
-        DebouncedEvent::Write(path) => {
-            notifier::send_notification("File Written", &path.to_string_lossy());
-        }
-        
-        DebouncedEvent::Remove(path) => {
-            notifier::send_notification("File Deleted", &path.to_string_lossy());
-        }
-
-        DebouncedEvent::Rename(old_path, new_path) => {
-            notifier::send_notification("File Moved", &format!("{} to {}", old_path.to_string_lossy(), new_path.to_string_lossy()));
-        }
-
-        DebouncedEvent::NoticeAccess(path) => {
-            notifier::send_notification("File Accessed", &path.to_string_lossy());
-        }
-
-        DebouncedEvent::NoticeModify(path) => {
-            notifier::send_notification("File Modified", &path.to_string_lossy());
-        }
-        _ => {}
-
-    }
+    Ok(())
 }

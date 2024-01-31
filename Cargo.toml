@@ -1,10 +1,13 @@
 [package]
-name = "fs-daemon-rs"
+name = "fs-mon-rs"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-notify = "4.0.0"
+env_logger = "0.11.1"
+log = "0.4.20"
+notify = "6.1.1"
+notify-debouncer-full = "0.3.1"
 notify-rust = "4.10.0"
