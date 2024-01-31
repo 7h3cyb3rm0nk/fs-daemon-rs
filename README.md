@@ -1,2 +1,6 @@
 # fs-daemon-rs
-A file monitoring daemon on rust
+A file monitoring service on rust that monitors every event recursively on a specified directory
+
+
+USAGE :
+  #### cargo run /path/to/directory
