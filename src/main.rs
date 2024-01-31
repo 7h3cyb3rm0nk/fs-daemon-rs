@@ -1,4 +1,4 @@
-use notify::{RecommendedWatcher, Watcher, RecursiveMode, DebouncedEvent};
+use notify::{RecommendedWatcher, Watcher, RecursiveMode, event::Event};
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
 
@@ -29,14 +29,14 @@ fn run_daemon() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-
-fn handle_event(event: DebouncedEvent) {
+type DebouncedEvent = Event;
+fn handle_event(event: Event) {
     match event {
-        DebouncedEvent::Create(path) => {
+        DebouncedEvent::kind::Create(path) => {
             notifier::send_notification("File Created", &path.to_string_lossy());   
         }
 
-        DebouncedEvent::Write(path) => {
+        DebouncedEvent::kind::Access(path) => {
             notifier::send_notification("File Written", &path.to_string_lossy());
         }
         
