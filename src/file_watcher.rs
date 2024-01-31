@@ -1,10 +1,10 @@
-use notify::{Watcher, RecursiveMode, DeboundedEvent};
+use notify::{Watcher, RecursiveMode, DebouncedEvent};
 use std::sync::mpsc::{channel, Receiver};
 use std::path::PathBuf;
 
 pub struct FileWatcher {
     watcher: notify::RecommendedWatcher,
-    rx: Receiver<DeboundedEvent>,
+    rx: Receiver<DebouncedEvent>,
 }
 
 impl FileWatcher {
