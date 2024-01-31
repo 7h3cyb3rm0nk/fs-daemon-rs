@@ -2,18 +2,24 @@ use notify::{RecursiveMode, Watcher};
 use notify_debouncer_full::new_debouncer;
 use std::{path::Path, time::Duration};
 
+
+
 /// Example for notify-debouncer-full
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let path = std::env::args()
-        .nth(1)
-        .expect("Argument 1 needs to be a path");
+    let path_result = std::env::args()
+        .nth(1);
+        
+    if let Some(path) = path_result {
 
     log::info!("Watching {path}");
 
     if let Err(error) = watch(path) {
         log::error!("Error: {error:?}");
+    } 
+    } else {
+        eprintln!("Insufficient arguments")
     }
 }
 
