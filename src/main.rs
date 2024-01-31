@@ -13,7 +13,7 @@ fn main() {
         
     if let Some(path) = path_result {
 
-    log::info!("Watching {path}");
+    log::info!("Watching {:?}", Path::new(&path).display());
 
     if let Err(error) = watch(path) {
         log::error!("Error: {error:?}");
